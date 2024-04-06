@@ -1,0 +1,26 @@
+{
+  "extends": ["config:best-practices", "config:js-app"],
+
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor"],
+      "matchCurrentVersion": "!/^[~^]?0/",
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor"],
+      "matchPackagePatterns": ["^@remix-run/"],
+      "automerge": false
+    }
+  ],
+
+  "lockFileMaintenance": {
+    "enabled": true,
+    "extends": ["schedule:weekly"],
+    "automerge": true
+  }
+}

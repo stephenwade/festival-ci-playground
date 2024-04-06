@@ -1,0 +1,14 @@
+.DS_Store
+node_modules/
+.cache/
+build/
+.env*
+
+# runtime
+upload
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/playwright/.auth/
