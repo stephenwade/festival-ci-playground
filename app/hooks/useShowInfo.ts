@@ -8,10 +8,7 @@ import type { TargetShowInfo, TargetTimeInfo } from '~/types/ShowInfo';
 import { useClock } from './useClock';
 import { useCurrentShowId } from './useCurrentShowId';
 
-export type LoadedMetadataHandler = (args: {
-  id: string;
-  duration: number;
-}) => void;
+type LoadedMetadataHandler = (args: { id: string; duration: number }) => void;
 
 export function useShowInfo(
   data: Pick<ShowData, 'serverDate' | 'sets'>,

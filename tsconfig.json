@@ -1,5 +1,5 @@
 {
-  "include": ["env.d.ts", ".eslintrc.cjs", "**/*.js", "**/*.ts", "**/*.tsx"],
+  "include": ["**/*.js", "**/*.ts", "**/*.tsx"],
   "exclude": ["build"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2020"],
