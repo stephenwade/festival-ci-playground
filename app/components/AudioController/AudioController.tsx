@@ -1,11 +1,6 @@
 import type { FC, ReactNode } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { AudioContext } from 'standardized-audio-context';
-
-interface State {
-  audio: HTMLAudioElement | null;
-  audioContext: AudioContext | null;
-}
 
 interface AudioControllerProps {
   /** Used in CI */
@@ -24,20 +19,12 @@ export const AudioController: FC<AudioControllerProps> = ({
   const [audioContextReady, setAudioContextReady] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  const stateRef = useRef<State>({
-    audio: null,
-    audioContext: null,
-  });
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const setupAudioContext = useCallback(() => {
-    const state = stateRef.current;
-
     const audioContext = new AudioContext();
 
-    const track = state.audio
-      ? audioContext.createMediaElementSource(state.audio)
-      : null;
+    const track = audioContext.createMediaElementSource(audioRef.current!);
 
     const analyserNode = audioContext.createAnalyser();
     analyserNode.fftSize = 1024;
@@ -56,62 +43,25 @@ export const AudioController: FC<AudioControllerProps> = ({
     return audioContext;
   }, []);
 
-  const doStatusChange = useCallback((audioContextReady: boolean) => {
-    const state = stateRef.current;
-
-    const audio = state.audio;
-    if (audio === null) {
-      return;
-    }
-
-    if (audioContextReady) {
-      setAudioContextReady(true);
-    }
-  }, []);
-
-  const checkTargetShowInfo = useCallback(
-    ({ ignoreAudioContext = false } = {}) => {
-      const waitingForAudioContext = !ignoreAudioContext && !audioContextReady;
-
-      if (waitingForAudioContext) return;
-
-      doStatusChange(true);
-    },
-    [doStatusChange, audioContextReady],
-  );
-
   const initializeAudio = useCallback(async () => {
-    const state = stateRef.current;
-
     if (!forceSkipAudioContext) {
       try {
-        state.audioContext = setupAudioContext();
+        audioContextRef.current = setupAudioContext();
       } catch {
         // ignore errors
       }
     }
 
-    if (state.audioContext) {
+    if (audioContextRef.current) {
       try {
-        await state.audioContext.resume();
+        await audioContextRef.current.resume();
       } catch {
         // ignore errors
       }
     }
 
-    checkTargetShowInfo({ ignoreAudioContext: true });
-  }, [checkTargetShowInfo, forceSkipAudioContext, setupAudioContext]);
-
-  // This will only run once.
-  useEffect(() => {
-    const state = stateRef.current;
-
-    state.audio = audioRef.current;
-  }, []);
-
-  useEffect(() => {
-    checkTargetShowInfo();
-  }, [checkTargetShowInfo]);
+    setAudioContextReady(true);
+  }, [forceSkipAudioContext, setupAudioContext]);
 
   return (
     <>

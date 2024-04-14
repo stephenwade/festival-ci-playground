@@ -1,6 +1,3 @@
-// @ts-check
-/* global process */
-
 import path from 'node:path';
 
 import { defineConfig, devices } from '@playwright/experimental-ct-react';
