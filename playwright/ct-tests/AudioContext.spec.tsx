@@ -2,8 +2,6 @@ import { expect, test } from '@playwright/experimental-ct-react';
 
 import { AudioControllerTest } from './AudioContextTest';
 
-test.describe.configure({ retries: 5 });
-
 test('can resume an AudioContext', async ({ mount }) => {
   const component = await mount(<AudioControllerTest />);
 
