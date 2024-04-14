@@ -20,7 +20,6 @@ interface State {
 
   audioContext: AudioContext | null;
   setVolume: ((volume: number) => void) | null;
-  getAudioVisualizerData: (() => Uint8Array) | null;
 
   lastTargetShowInfo: TargetShowInfo | null;
   nextChange: ShowInfo | null;
@@ -28,15 +27,9 @@ interface State {
   stalledTimeout: NodeJS.Timeout | null;
 }
 
-export interface AudioMetadata {
-  id: string;
-  duration: number;
-}
-
 interface AudioControllerProps {
   targetShowInfo: TargetShowInfo;
   volume: number;
-  onLoadedMetadata: (args: AudioMetadata) => void;
   /** Used in CI */
   forceSkipAudioContext?: boolean;
 
@@ -46,14 +39,12 @@ interface AudioControllerProps {
     audioError: boolean;
 
     initializeAudio: () => Promise<void>;
-    getAudioVisualizerData: (() => Uint8Array) | null;
   }) => ReactNode;
 }
 
 export const AudioController: FC<AudioControllerProps> = ({
   targetShowInfo,
   volume,
-  onLoadedMetadata,
   forceSkipAudioContext,
   children,
 }) => {
@@ -73,7 +64,6 @@ export const AudioController: FC<AudioControllerProps> = ({
 
     audioContext: null,
     setVolume: null,
-    getAudioVisualizerData: null,
 
     lastTargetShowInfo: null,
     nextChange: null,
@@ -146,11 +136,6 @@ export const AudioController: FC<AudioControllerProps> = ({
           .connect(audioContext.destination);
       }
     }
-
-    state.getAudioVisualizerData = () => {
-      analyserNode.getByteFrequencyData(audioVisualizerData);
-      return audioVisualizerData;
-    };
 
     return audioContext;
   }, [volume]);
@@ -404,21 +389,6 @@ export const AudioController: FC<AudioControllerProps> = ({
       onError: () => {
         setAudioError(true);
       },
-      onLoadedMetadata: (e) => {
-        const state = stateRef.current;
-
-        const set =
-          e.target === state.activeAudio
-            ? showInfo.currentSet
-            : showInfo.nextSet;
-
-        if (!set) return;
-
-        onLoadedMetadata({
-          id: set.id,
-          duration: (e.target as HTMLAudioElement).duration,
-        });
-      },
       onPause: (e) => {
         const state = stateRef.current;
 
@@ -475,7 +445,7 @@ export const AudioController: FC<AudioControllerProps> = ({
         }, 10 * 1000);
       },
     }),
-    [doNextStatusChange, onLoadedMetadata, onStalled, showInfo],
+    [doNextStatusChange, onStalled, showInfo],
   );
 
   // This will only run once.
@@ -501,7 +471,6 @@ export const AudioController: FC<AudioControllerProps> = ({
         audioError,
 
         initializeAudio,
-        getAudioVisualizerData: stateRef.current.getAudioVisualizerData,
       })}
       <audio ref={audio1Ref} crossOrigin="anonymous" {...audioEvents} />
       <audio ref={audio2Ref} crossOrigin="anonymous" {...audioEvents} />

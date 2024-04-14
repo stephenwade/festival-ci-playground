@@ -3,54 +3,31 @@ import { useLoaderData } from '@remix-run/react';
 import { createRemixStub } from '@remix-run/testing';
 import { addSeconds } from 'date-fns';
 import type { FC } from 'react';
-import { useState } from 'react';
 import { useDeepCompareMemo } from 'use-deep-compare';
 
-import type { AudioMetadata } from '~/components/AudioController';
 import { AudioController } from '~/components/AudioController';
 import { useShowInfo } from '~/hooks/useShowInfo';
 import type { ShowData } from '~/types/ShowData';
 
-import {
-  AUDIO_FILE_LENGTH,
-  AUDIO_FILE_URL,
-  ID_1,
-  ID_2,
-  ID_3,
-  ID_4,
-} from './shared-data';
-
 interface GetMockDataProps {
   offsetSec?: number;
-  alternate?: boolean;
-  empty?: boolean;
 }
 
 function getMockData({
-  offsetSec = 0,
-  alternate = false,
-  empty = false,
+  offsetSec = -5,
 }: GetMockDataProps): Pick<ShowData, 'serverDate' | 'sets'> {
   const now = new Date();
 
-  const sets: ShowData['sets'] = empty
-    ? []
-    : [
-        {
-          id: alternate ? ID_3 : ID_1,
-          audioUrl: `${AUDIO_FILE_URL}?${alternate ? 3 : 1}`,
-          artist: `Artist ${alternate ? 3 : 1}`,
-          start: addSeconds(now, 0 - offsetSec).toISOString(),
-          duration: AUDIO_FILE_LENGTH,
-        },
-        {
-          id: alternate ? ID_4 : ID_2,
-          audioUrl: `${AUDIO_FILE_URL}?${alternate ? 4 : 2}`,
-          artist: `Artist ${alternate ? 4 : 2}`,
-          start: addSeconds(now, 100 - offsetSec).toISOString(),
-          duration: AUDIO_FILE_LENGTH,
-        },
-      ];
+  const sets: ShowData['sets'] = [
+    {
+      id: 'ccc19b72-4a68-3219-9409-ef1ef0d75643',
+      audioUrl:
+        'https://festivalci.z13.web.core.windows.net/90-sec-silence.mp3?1',
+      artist: 'Artist 1',
+      start: addSeconds(now, 0 - offsetSec).toISOString(),
+      duration: 90,
+    },
+  ];
 
   return {
     serverDate: now.toISOString(),
@@ -58,73 +35,30 @@ function getMockData({
   };
 }
 
-interface TestProps extends Omit<GetMockDataProps, 'alternate'> {
+interface TestProps extends GetMockDataProps {
   forceSkipAudioContext: boolean;
 }
 
 function AudioControllerDisplay() {
   const { forceSkipAudioContext, ...props } = useLoaderData<TestProps>();
 
-  const [alternate, setAlternate] = useState(false);
-
-  const data = useDeepCompareMemo(
-    () => getMockData({ ...props, alternate }),
-    [alternate, props],
-  );
+  const data = useDeepCompareMemo(() => getMockData(props), [props]);
   const { targetShowInfo } = useShowInfo(data, { ci: true });
-
-  const [metadatas, setMetadatas] = useState<AudioMetadata[]>([]);
-  function onLoadedMetadata(metadata: AudioMetadata) {
-    setMetadatas((prev) => [...prev, metadata]);
-  }
 
   return (
     <AudioController
       targetShowInfo={targetShowInfo}
       volume={42}
-      onLoadedMetadata={onLoadedMetadata}
       forceSkipAudioContext={forceSkipAudioContext}
     >
-      {({ showInfo, initializeAudio, getAudioVisualizerData }) => (
+      {({ showInfo, initializeAudio }) => (
         <div>
           <p>
             <button data-testid="init-button" onClick={initializeAudio}>
               Initialize audio
             </button>
           </p>
-          <p>
-            {alternate ? (
-              'Using alternate data'
-            ) : (
-              <button
-                data-testid="alternate-button"
-                onClick={() => {
-                  setAlternate(true);
-                }}
-              >
-                Use alternate data
-              </button>
-            )}
-          </p>
           <p>Show status: {showInfo.status}</p>
-          <p>
-            Metadata events:
-            <ul>
-              {metadatas.map((metadata, i) => (
-                <li data-testid="metadata-event" key={i}>
-                  <span data-testid="metadata-event-id">{metadata.id}</span>{' '}
-                  <span data-testid="metadata-event-duration">
-                    {metadata.duration}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </p>
-          <p>
-            {getAudioVisualizerData
-              ? 'Visualizer data is available'
-              : 'Visualizer data is not available'}
-          </p>
         </div>
       )}
     </AudioController>

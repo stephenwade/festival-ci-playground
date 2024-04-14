@@ -7,10 +7,7 @@ test.describe.configure({ retries: 5 });
 function tests({ forceSkipAudioContext }: { forceSkipAudioContext: boolean }) {
   test('calling initializeAudio() sets the show status', async ({ mount }) => {
     const component = await mount(
-      <AudioControllerTest
-        offsetSec={-5}
-        forceSkipAudioContext={forceSkipAudioContext}
-      />,
+      <AudioControllerTest forceSkipAudioContext={forceSkipAudioContext} />,
     );
 
     await expect(component).toContainText(
