@@ -1,4 +1,3 @@
-import { differenceInSeconds } from 'date-fns';
 import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioContext } from 'standardized-audio-context';
@@ -6,21 +5,15 @@ import { AudioContext } from 'standardized-audio-context';
 import type { ShowInfo, TargetShowInfo } from '~/types/ShowInfo';
 
 interface State {
-  activeAudio: HTMLAudioElement | null;
-  inactiveAudio: HTMLAudioElement | null;
-
+  audio: HTMLAudioElement | null;
   audioContext: AudioContext | null;
-  setVolume: ((volume: number) => void) | null;
 
   lastTargetShowInfo: TargetShowInfo | null;
   nextChange: ShowInfo | null;
-
-  stalledTimeout: NodeJS.Timeout | null;
 }
 
 interface AudioControllerProps {
   targetShowInfo: TargetShowInfo;
-  volume: number;
   /** Used in CI */
   forceSkipAudioContext?: boolean;
 
@@ -33,7 +26,6 @@ interface AudioControllerProps {
 
 export const AudioController: FC<AudioControllerProps> = ({
   targetShowInfo,
-  volume,
   forceSkipAudioContext,
   children,
 }) => {
@@ -43,20 +35,14 @@ export const AudioController: FC<AudioControllerProps> = ({
       : { status: 'WAITING_FOR_AUDIO_CONTEXT' },
   );
 
-  const audio1Ref = useRef<HTMLAudioElement>(null);
-  const audio2Ref = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const stateRef = useRef<State>({
-    activeAudio: null,
-    inactiveAudio: null,
-
+    audio: null,
     audioContext: null,
-    setVolume: null,
 
     lastTargetShowInfo: null,
     nextChange: null,
-
-    stalledTimeout: null,
   });
 
   const setupAudioContext = useCallback(() => {
@@ -64,12 +50,9 @@ export const AudioController: FC<AudioControllerProps> = ({
 
     const audioContext = new AudioContext();
 
-    const tracks = [state.activeAudio, state.inactiveAudio].map((audio) => {
-      if (audio) {
-        return audioContext.createMediaElementSource(audio);
-      }
-      return null;
-    });
+    const tracks = [
+      state.audio ? audioContext.createMediaElementSource(state.audio) : null,
+    ];
 
     const analyserNode = audioContext.createAnalyser();
     analyserNode.fftSize = 1024;
@@ -77,13 +60,6 @@ export const AudioController: FC<AudioControllerProps> = ({
     analyserNode.smoothingTimeConstant = 0.75;
 
     const gainNode = audioContext.createGain();
-    state.setVolume = (volume) => {
-      if (volume < 0) gainNode.gain.value = 0;
-      else if (volume > 100) gainNode.gain.value = 1;
-      else gainNode.gain.value = volume / 100;
-    };
-
-    state.setVolume(volume / 100);
 
     for (const track of tracks) {
       if (track) {
@@ -95,21 +71,21 @@ export const AudioController: FC<AudioControllerProps> = ({
     }
 
     return audioContext;
-  }, [volume]);
+  }, []);
 
   const doNextStatusChange = useCallback(() => {
     const state = stateRef.current;
 
     const change = state.nextChange;
-    const activeAudio = state.activeAudio;
-    if (change === null || activeAudio === null) {
+    const audio = state.audio;
+    if (change === null || audio === null) {
       return;
     }
     state.nextChange = null;
 
     const setChanged = change.currentSet !== showInfo.currentSet;
     const nextSrcAlreadySet =
-      activeAudio.attributes.getNamedItem('src')?.value ===
+      audio.attributes.getNamedItem('src')?.value ===
       change.currentSet?.audioUrl;
     const shouldChangeSrc = setChanged && !nextSrcAlreadySet;
 
@@ -117,7 +93,7 @@ export const AudioController: FC<AudioControllerProps> = ({
 
     if (change.status === 'WAITING_UNTIL_START') {
       if (shouldChangeSrc && change.currentSet) {
-        activeAudio.src = change.currentSet.audioUrl;
+        audio.src = change.currentSet.audioUrl;
       }
 
       newShowInfo = {
@@ -128,14 +104,14 @@ export const AudioController: FC<AudioControllerProps> = ({
       };
     } else if (change.status === 'PLAYING') {
       if (shouldChangeSrc && change.currentSet) {
-        activeAudio.src = change.currentSet.audioUrl;
+        audio.src = change.currentSet.audioUrl;
       }
 
       if (change.currentTime > 0) {
-        activeAudio.src += `#t=${change.currentTime}`;
+        audio.src += `#t=${change.currentTime}`;
       }
 
-      void activeAudio.play();
+      void audio.play();
 
       newShowInfo = {
         currentSet: change.currentSet,
@@ -163,53 +139,6 @@ export const AudioController: FC<AudioControllerProps> = ({
       }
     },
     [doNextStatusChange, showInfo.status],
-  );
-
-  const updateTime = useCallback(
-    (change: TargetShowInfo) => {
-      const state = stateRef.current;
-
-      if (state.activeAudio === null) {
-        return;
-      }
-
-      let newShowInfo: ShowInfo | undefined;
-
-      if (
-        showInfo.status === 'WAITING_UNTIL_START' &&
-        change.status === 'WAITING_UNTIL_START'
-      ) {
-        newShowInfo = {
-          ...showInfo,
-          secondsUntilSet: change.secondsUntilSet,
-        };
-      } else if (showInfo.status === 'PLAYING' && change.status === 'PLAYING') {
-        let delay = change.currentTime - state.activeAudio.currentTime;
-        if (
-          change.currentSet &&
-          showInfo.currentSet &&
-          change.currentSet.id !== showInfo.currentSet.id
-        ) {
-          const setDifference = differenceInSeconds(
-            change.currentSet.start,
-            showInfo.currentSet.start,
-          );
-          delay += setDifference;
-        }
-
-        if (delay < 0) delay = 0;
-
-        newShowInfo = {
-          ...showInfo,
-          delay,
-        };
-      }
-
-      if (newShowInfo) {
-        setShowInfo(newShowInfo);
-      }
-    },
-    [showInfo],
   );
 
   const checkTargetShowInfo = useCallback(
@@ -250,13 +179,9 @@ export const AudioController: FC<AudioControllerProps> = ({
         if (anythingChanged) {
           queueStatusChange(targetShowInfo);
         }
-
-        if (timeChanged) {
-          updateTime(targetShowInfo);
-        }
       }
     },
-    [queueStatusChange, showInfo.status, targetShowInfo, updateTime],
+    [queueStatusChange, showInfo.status, targetShowInfo],
   );
 
   const initializeAudio = useCallback(async () => {
@@ -272,16 +197,15 @@ export const AudioController: FC<AudioControllerProps> = ({
       }
     }
 
-    for (const audio of [audio1Ref.current, audio2Ref.current]) {
-      if (audio) {
-        // Safari: activate the audio element by trying to play
-        audio.play().catch(() => {
-          // ignore errors
-        });
-        // Firefox: if you don't pause after trying to play, it will start to play
-        // as soon as src is set
-        audio.pause();
-      }
+    const audio = audioRef.current;
+    if (audio) {
+      // Safari: activate the audio element by trying to play
+      audio.play().catch(() => {
+        // ignore errors
+      });
+      // Firefox: if you don't pause after trying to play, it will start to play
+      // as soon as src is set
+      audio.pause();
     }
 
     if (state.audioContext) {
@@ -304,26 +228,20 @@ export const AudioController: FC<AudioControllerProps> = ({
   useEffect(() => {
     const state = stateRef.current;
 
-    state.activeAudio = audio1Ref.current;
-    state.inactiveAudio = audio2Ref.current;
+    state.audio = audioRef.current;
   }, []);
 
   useEffect(() => {
-    const state = stateRef.current;
-
     checkTargetShowInfo();
-    state.setVolume?.(volume);
-  }, [checkTargetShowInfo, volume]);
+  }, [checkTargetShowInfo]);
 
   return (
     <>
       {children({
         showInfo,
-
         initializeAudio,
       })}
-      <audio ref={audio1Ref} crossOrigin="anonymous" />
-      <audio ref={audio2Ref} crossOrigin="anonymous" />
+      <audio ref={audioRef} crossOrigin="anonymous" />
     </>
   );
 };
