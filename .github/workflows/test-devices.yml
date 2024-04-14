@@ -1,0 +1,15 @@
+---
+name: Component tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-devices:
+    runs-on: macos-14
+    steps:
+      - run: brew install blackhole-2ch switchaudio-osx
+      - run: SwitchAudioSource -a
+      - run: SwitchAudioSource -c
