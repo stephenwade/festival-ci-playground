@@ -2,18 +2,17 @@ import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioContext } from 'standardized-audio-context';
 
-import type { ShowInfo, TargetShowInfo } from '~/types/ShowInfo';
+import type { ShowInfo } from '~/types/ShowInfo';
 
 interface State {
   audio: HTMLAudioElement | null;
   audioContext: AudioContext | null;
 
-  lastTargetShowInfo: TargetShowInfo | null;
+  lastTargetShowInfo: ShowInfo | null;
   nextChange: ShowInfo | null;
 }
 
 interface AudioControllerProps {
-  targetShowInfo: TargetShowInfo;
   /** Used in CI */
   forceSkipAudioContext?: boolean;
 
@@ -24,15 +23,12 @@ interface AudioControllerProps {
 }
 
 export const AudioController: FC<AudioControllerProps> = ({
-  targetShowInfo,
   forceSkipAudioContext,
   children,
 }) => {
-  const [showInfo, setShowInfo] = useState<ShowInfo>(
-    targetShowInfo.status === 'ENDED'
-      ? { status: 'ENDED' }
-      : { status: 'WAITING_FOR_AUDIO_CONTEXT' },
-  );
+  const [showInfo, setShowInfo] = useState<ShowInfo>({
+    status: 'WAITING_FOR_AUDIO_CONTEXT',
+  });
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -80,50 +76,18 @@ export const AudioController: FC<AudioControllerProps> = ({
     }
     state.nextChange = null;
 
-    const setChanged = change.currentSet !== showInfo.currentSet;
-    const nextSrcAlreadySet =
-      audio.attributes.getNamedItem('src')?.value ===
-      change.currentSet?.audioUrl;
-    const shouldChangeSrc = setChanged && !nextSrcAlreadySet;
-
     let newShowInfo: ShowInfo;
 
     if (change.status === 'WAITING_UNTIL_START') {
-      if (shouldChangeSrc && change.currentSet) {
-        audio.src = change.currentSet.audioUrl;
-      }
-
       newShowInfo = {
-        currentSet: change.currentSet,
         status: 'WAITING_UNTIL_START',
-        secondsUntilSet: change.secondsUntilSet,
-        nextSet: change.nextSet,
       };
-    } else if (change.status === 'PLAYING') {
-      if (shouldChangeSrc && change.currentSet) {
-        audio.src = change.currentSet.audioUrl;
-      }
-
-      if (change.currentTime > 0) {
-        audio.src += `#t=${change.currentTime}`;
-      }
-
-      void audio.play();
-
-      newShowInfo = {
-        currentSet: change.currentSet,
-        status: 'PLAYING',
-        currentTime: change.currentTime,
-        nextSet: change.nextSet,
-      };
-    } else if (change.status === 'ENDED') {
-      newShowInfo = { status: 'ENDED' };
     } else {
       throw new Error('Unknown status');
     }
 
     setShowInfo(newShowInfo);
-  }, [showInfo.currentSet]);
+  }, []);
 
   const queueStatusChange = useCallback(
     (change: ShowInfo) => {
@@ -131,22 +95,23 @@ export const AudioController: FC<AudioControllerProps> = ({
 
       state.nextChange = change;
 
-      if (showInfo.status !== 'PLAYING') {
-        doNextStatusChange();
-      }
+      doNextStatusChange();
     },
     [doNextStatusChange, showInfo.status],
   );
 
   const checkTargetShowInfo = useCallback(
     ({ ignoreAudioContext = false } = {}) => {
+      const targetShowInfo: ShowInfo = {
+        status: 'WAITING_UNTIL_START',
+      };
+
       const state = stateRef.current;
 
-      const ended = targetShowInfo.status === 'ENDED';
       const waitingForAudioContext =
         !ignoreAudioContext && showInfo.status === 'WAITING_FOR_AUDIO_CONTEXT';
 
-      if (waitingForAudioContext && !ended) return;
+      if (waitingForAudioContext) return;
 
       const lastTargetShowInfo = state.lastTargetShowInfo;
 
@@ -157,33 +122,18 @@ export const AudioController: FC<AudioControllerProps> = ({
       } else {
         const statusChanged =
           targetShowInfo.status !== lastTargetShowInfo.status;
-        const setChanged =
-          targetShowInfo.currentSet?.id !== lastTargetShowInfo.currentSet?.id;
-        const secondsUntilSetChanged =
-          targetShowInfo.status === 'WAITING_UNTIL_START' &&
-          lastTargetShowInfo.status === 'WAITING_UNTIL_START' &&
-          targetShowInfo.secondsUntilSet !== lastTargetShowInfo.secondsUntilSet;
-        const currentTimeChanged =
-          targetShowInfo.status === 'PLAYING' &&
-          lastTargetShowInfo.status === 'PLAYING' &&
-          targetShowInfo.currentTime !== lastTargetShowInfo.currentTime;
-
-        const timeChanged = secondsUntilSetChanged || currentTimeChanged;
-        const anythingChanged = timeChanged || statusChanged || setChanged;
 
         state.lastTargetShowInfo = targetShowInfo;
 
-        if (anythingChanged) {
+        if (statusChanged) {
           queueStatusChange(targetShowInfo);
         }
       }
     },
-    [queueStatusChange, showInfo.status, targetShowInfo],
+    [queueStatusChange, showInfo.status],
   );
 
   const initializeAudio = useCallback(async () => {
-    if (targetShowInfo.status === 'ENDED') return;
-
     const state = stateRef.current;
 
     if (!forceSkipAudioContext) {
@@ -214,12 +164,7 @@ export const AudioController: FC<AudioControllerProps> = ({
     }
 
     checkTargetShowInfo({ ignoreAudioContext: true });
-  }, [
-    checkTargetShowInfo,
-    forceSkipAudioContext,
-    setupAudioContext,
-    targetShowInfo.status,
-  ]);
+  }, [checkTargetShowInfo, forceSkipAudioContext, setupAudioContext]);
 
   // This will only run once.
   useEffect(() => {
