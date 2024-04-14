@@ -18,7 +18,6 @@ export const AudioController: FC<AudioControllerProps> = ({
   const [audioContextReady, setAudioContextReady] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
 
   const setupAudioContext = useCallback(() => {
     const audioContext = new AudioContext();
@@ -45,15 +44,8 @@ export const AudioController: FC<AudioControllerProps> = ({
   const initializeAudio = useCallback(async () => {
     if (!forceSkipAudioContext) {
       try {
-        audioContextRef.current = setupAudioContext();
-      } catch {
-        // ignore errors
-      }
-    }
-
-    if (audioContextRef.current) {
-      try {
-        await audioContextRef.current.resume();
+        const audioContext = setupAudioContext();
+        await audioContext.resume();
       } catch {
         // ignore errors
       }
