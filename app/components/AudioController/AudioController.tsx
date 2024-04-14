@@ -49,9 +49,9 @@ export const AudioController: FC<AudioControllerProps> = ({
 
     const audioContext = new AudioContext();
 
-    const tracks = [
-      state.audio ? audioContext.createMediaElementSource(state.audio) : null,
-    ];
+    const track = state.audio
+      ? audioContext.createMediaElementSource(state.audio)
+      : null;
 
     const analyserNode = audioContext.createAnalyser();
     analyserNode.fftSize = 1024;
@@ -60,13 +60,11 @@ export const AudioController: FC<AudioControllerProps> = ({
 
     const gainNode = audioContext.createGain();
 
-    for (const track of tracks) {
-      if (track) {
-        track
-          .connect(analyserNode)
-          .connect(gainNode)
-          .connect(audioContext.destination);
-      }
+    if (track) {
+      track
+        .connect(analyserNode)
+        .connect(gainNode)
+        .connect(audioContext.destination);
     }
 
     return audioContext;

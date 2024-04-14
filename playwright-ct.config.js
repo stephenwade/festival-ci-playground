@@ -17,7 +17,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'blob' : 'html',
 
   use: {
-    trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
+    trace: 'on',
     ctPort: 3100,
     ctTemplateDir: 'playwright/ct-tests',
     ctViteConfig: {

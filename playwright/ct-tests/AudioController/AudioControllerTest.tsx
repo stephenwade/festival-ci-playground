@@ -16,7 +16,7 @@ function AudioControllerDisplay() {
 
   const now = new Date();
 
-  const { targetShowInfo } = useShowInfo(
+  const { targetShowInfo: _ } = useShowInfo(
     {
       serverDate: now.toISOString(),
       sets: [
@@ -32,6 +32,20 @@ function AudioControllerDisplay() {
     },
     { ci: true },
   );
+  // console.log(JSON.stringify(targetShowInfo));
+  const targetShowInfo = {
+    status: 'WAITING_UNTIL_START' as const,
+    secondsUntilSet: 5,
+    currentSet: {
+      id: 'ccc19b72-4a68-3219-9409-ef1ef0d75643',
+      audioUrl:
+        'https://festivalci.z13.web.core.windows.net/90-sec-silence.mp3?1',
+      artist: 'Artist 1',
+      start: addSeconds(now, 5),
+      duration: 90,
+      end: addSeconds(now, 95),
+    },
+  };
 
   return (
     <AudioController
