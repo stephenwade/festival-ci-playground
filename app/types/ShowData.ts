@@ -5,12 +5,3 @@ export interface SetData {
   start: string;
   duration: number;
 }
-
-export interface ShowData {
-  name: string;
-  description: string;
-  showLogoUrl: string;
-  backgroundImageUrl: string;
-  sets: SetData[];
-  serverDate: string;
-}

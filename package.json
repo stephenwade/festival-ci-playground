@@ -32,7 +32,6 @@
     "knip": "5.9.4",
     "prettier": "3.2.5",
     "typescript": "5.4.5",
-    "typescript-eslint": "7.6.0",
-    "use-deep-compare": "1.2.1"
+    "typescript-eslint": "7.6.0"
   }
 }

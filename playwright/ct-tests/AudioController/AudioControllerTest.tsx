@@ -5,7 +5,6 @@ import { addSeconds } from 'date-fns';
 import type { FC } from 'react';
 
 import { AudioController } from '~/components/AudioController';
-import { useShowInfo } from '~/hooks/useShowInfo';
 
 interface TestProps {
   forceSkipAudioContext: boolean;
@@ -16,23 +15,6 @@ function AudioControllerDisplay() {
 
   const now = new Date();
 
-  const { targetShowInfo: _ } = useShowInfo(
-    {
-      serverDate: now.toISOString(),
-      sets: [
-        {
-          id: 'ccc19b72-4a68-3219-9409-ef1ef0d75643',
-          audioUrl:
-            'https://festivalci.z13.web.core.windows.net/90-sec-silence.mp3?1',
-          artist: 'Artist 1',
-          start: addSeconds(now, 5).toISOString(),
-          duration: 90,
-        },
-      ],
-    },
-    { ci: true },
-  );
-  // console.log(JSON.stringify(targetShowInfo));
   const targetShowInfo = {
     status: 'WAITING_UNTIL_START' as const,
     secondsUntilSet: 5,

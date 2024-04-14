@@ -10,7 +10,7 @@ interface SetsInfo {
   nextSet?: SetInfo;
 }
 
-export type TargetTimeInfo =
+type TargetTimeInfo =
   | { status: 'WAITING_UNTIL_START'; secondsUntilSet?: number }
   | { status: 'PLAYING'; currentTime: number; delay?: number }
   | { status: 'ENDED' };
