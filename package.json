@@ -13,8 +13,6 @@
     "test-ct": "playwright test -c playwright-ct.config.js"
   },
   "dependencies": {
-    "@remix-run/node": "2.8.1",
-    "@remix-run/react": "2.8.1",
     "date-fns": "2.30.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -24,10 +22,8 @@
     "@eslint/js": "9.0.0",
     "@playwright/experimental-ct-react": "1.43.1",
     "@playwright/test": "1.43.1",
-    "@remix-run/testing": "2.8.1",
     "@types/eslint__js": "8.42.3",
     "@types/react": "18.2.78",
-    "@types/react-dom": "18.2.25",
     "eslint": "8.57.0",
     "knip": "5.9.4",
     "prettier": "3.2.5",

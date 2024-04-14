@@ -1,6 +1,3 @@
-import { json } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
-import { createRemixStub } from '@remix-run/testing';
 import { addSeconds } from 'date-fns';
 import type { FC } from 'react';
 
@@ -10,9 +7,9 @@ interface TestProps {
   forceSkipAudioContext: boolean;
 }
 
-function AudioControllerDisplay() {
-  const { forceSkipAudioContext } = useLoaderData<TestProps>();
-
+export const AudioControllerTest: FC<TestProps> = ({
+  forceSkipAudioContext,
+}) => {
   const now = new Date();
 
   const targetShowInfo = {
@@ -44,18 +41,4 @@ function AudioControllerDisplay() {
       )}
     </AudioController>
   );
-}
-
-export const AudioControllerTest: FC<TestProps> = (props) => {
-  const RemixStub = createRemixStub([
-    {
-      path: '/',
-      Component: AudioControllerDisplay,
-      loader() {
-        return json(props);
-      },
-    },
-  ]);
-
-  return <RemixStub />;
 };
