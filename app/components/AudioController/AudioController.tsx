@@ -19,7 +19,6 @@ interface AudioControllerProps {
 
   children: (args: {
     showInfo: ShowInfo;
-
     initializeAudio: () => Promise<void>;
   }) => ReactNode;
 }
