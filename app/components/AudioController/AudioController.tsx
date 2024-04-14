@@ -2,14 +2,9 @@ import type { FC, ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioContext } from 'standardized-audio-context';
 
-import type { ShowInfo } from '~/types/ShowInfo';
-
 interface State {
   audio: HTMLAudioElement | null;
   audioContext: AudioContext | null;
-
-  lastTargetShowInfo: ShowInfo | null;
-  nextChange: ShowInfo | null;
 }
 
 interface AudioControllerProps {
@@ -17,7 +12,7 @@ interface AudioControllerProps {
   forceSkipAudioContext?: boolean;
 
   children: (args: {
-    showInfo: ShowInfo;
+    audioContextReady: boolean;
     initializeAudio: () => Promise<void>;
   }) => ReactNode;
 }
@@ -26,18 +21,13 @@ export const AudioController: FC<AudioControllerProps> = ({
   forceSkipAudioContext,
   children,
 }) => {
-  const [showInfo, setShowInfo] = useState<ShowInfo>({
-    status: 'WAITING_FOR_AUDIO_CONTEXT',
-  });
+  const [audioContextReady, setAudioContextReady] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const stateRef = useRef<State>({
     audio: null,
     audioContext: null,
-
-    lastTargetShowInfo: null,
-    nextChange: null,
   });
 
   const setupAudioContext = useCallback(() => {
@@ -66,71 +56,28 @@ export const AudioController: FC<AudioControllerProps> = ({
     return audioContext;
   }, []);
 
-  const doNextStatusChange = useCallback(() => {
+  const doStatusChange = useCallback((audioContextReady: boolean) => {
     const state = stateRef.current;
 
-    const change = state.nextChange;
     const audio = state.audio;
-    if (change === null || audio === null) {
+    if (audio === null) {
       return;
     }
-    state.nextChange = null;
 
-    let newShowInfo: ShowInfo;
-
-    if (change.status === 'WAITING_UNTIL_START') {
-      newShowInfo = {
-        status: 'WAITING_UNTIL_START',
-      };
-    } else {
-      throw new Error('Unknown status');
+    if (audioContextReady) {
+      setAudioContextReady(true);
     }
-
-    setShowInfo(newShowInfo);
   }, []);
-
-  const queueStatusChange = useCallback(
-    (change: ShowInfo) => {
-      const state = stateRef.current;
-
-      state.nextChange = change;
-
-      doNextStatusChange();
-    },
-    [doNextStatusChange, showInfo.status],
-  );
 
   const checkTargetShowInfo = useCallback(
     ({ ignoreAudioContext = false } = {}) => {
-      const targetShowInfo: ShowInfo = {
-        status: 'WAITING_UNTIL_START',
-      };
-
-      const state = stateRef.current;
-
-      const waitingForAudioContext =
-        !ignoreAudioContext && showInfo.status === 'WAITING_FOR_AUDIO_CONTEXT';
+      const waitingForAudioContext = !ignoreAudioContext && !audioContextReady;
 
       if (waitingForAudioContext) return;
 
-      const lastTargetShowInfo = state.lastTargetShowInfo;
-
-      const firstRun = !lastTargetShowInfo;
-      if (firstRun) {
-        state.lastTargetShowInfo = targetShowInfo;
-        queueStatusChange(targetShowInfo);
-      } else {
-        const statusChanged =
-          targetShowInfo.status !== lastTargetShowInfo.status;
-
-        state.lastTargetShowInfo = targetShowInfo;
-
-        if (statusChanged) {
-          queueStatusChange(targetShowInfo);
-        }
-      }
+      doStatusChange(true);
     },
-    [queueStatusChange, showInfo.status],
+    [doStatusChange, audioContextReady],
   );
 
   const initializeAudio = useCallback(async () => {
@@ -142,17 +89,6 @@ export const AudioController: FC<AudioControllerProps> = ({
       } catch {
         // ignore errors
       }
-    }
-
-    const audio = audioRef.current;
-    if (audio) {
-      // Safari: activate the audio element by trying to play
-      audio.play().catch(() => {
-        // ignore errors
-      });
-      // Firefox: if you don't pause after trying to play, it will start to play
-      // as soon as src is set
-      audio.pause();
     }
 
     if (state.audioContext) {
@@ -180,7 +116,7 @@ export const AudioController: FC<AudioControllerProps> = ({
   return (
     <>
       {children({
-        showInfo,
+        audioContextReady,
         initializeAudio,
       })}
       <audio ref={audioRef} crossOrigin="anonymous" />

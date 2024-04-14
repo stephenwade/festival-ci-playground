@@ -11,12 +11,12 @@ export const AudioControllerTest: FC<TestProps> = ({
 }) => {
   return (
     <AudioController forceSkipAudioContext={forceSkipAudioContext}>
-      {({ showInfo, initializeAudio }) => (
+      {({ audioContextReady, initializeAudio }) => (
         <div>
           <button data-testid="init-button" onClick={initializeAudio}>
             Initialize audio
           </button>
-          <p>Show status: {showInfo.status}</p>
+          <p>Audio context ready: {audioContextReady ? 'yes' : 'no'}</p>
         </div>
       )}
     </AudioController>

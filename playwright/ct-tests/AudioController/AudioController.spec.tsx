@@ -10,13 +10,11 @@ function tests({ forceSkipAudioContext }: { forceSkipAudioContext: boolean }) {
       <AudioControllerTest forceSkipAudioContext={forceSkipAudioContext} />,
     );
 
-    await expect(component).toContainText(
-      'Show status: WAITING_FOR_AUDIO_CONTEXT',
-    );
+    await expect(component).toContainText('Audio context ready: no');
 
     await component.getByTestId('init-button').click();
 
-    await expect(component).toContainText('Show status: WAITING_UNTIL_START');
+    await expect(component).toContainText('Audio context ready: yes');
   });
 }
 
