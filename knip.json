@@ -1,6 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "entry": ["playwright/ct-tests/index.tsx"],
+  "ignoreDependencies": ["react-dom"],
   "playwright": {
     "config": ["playwright-ct.config.js"],
     "entry": ["**/*.spec.ts?(x)"]

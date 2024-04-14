@@ -13,22 +13,15 @@
     "test-ct": "playwright test -c playwright-ct.config.js"
   },
   "dependencies": {
-    "@remix-run/node": "2.8.1",
-    "@remix-run/react": "2.8.1",
-    "date-fns": "2.30.0",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "standardized-audio-context": "25.3.68"
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@playwright/experimental-ct-react": "1.43.0",
-    "@playwright/test": "1.43.0",
-    "@remix-run/testing": "2.8.1",
-    "@types/react": "18.2.74",
-    "@types/react-dom": "18.2.24",
-    "knip": "5.8.0",
+    "@playwright/experimental-ct-react": "1.43.1",
+    "@playwright/test": "1.43.1",
+    "@types/react": "18.2.78",
+    "knip": "5.9.4",
     "prettier": "3.2.5",
-    "typescript": "5.4.4",
-    "use-deep-compare": "1.2.1"
+    "typescript": "5.4.5"
   }
 }
