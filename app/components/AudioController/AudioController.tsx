@@ -1,17 +1,8 @@
 import { differenceInSeconds } from 'date-fns';
-import type { AudioHTMLAttributes, FC, ReactNode, SyntheticEvent } from 'react';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from 'react';
+import type { FC, ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AudioContext } from 'standardized-audio-context';
 
-import type { AudioStatus } from '~/types/AudioStatus';
-import { initialAudioStatus } from '~/types/AudioStatus';
 import type { ShowInfo, TargetShowInfo } from '~/types/ShowInfo';
 
 interface State {
@@ -35,8 +26,6 @@ interface AudioControllerProps {
 
   children: (args: {
     showInfo: ShowInfo;
-    audioStatus: AudioStatus;
-    audioError: boolean;
 
     initializeAudio: () => Promise<void>;
   }) => ReactNode;
@@ -53,7 +42,6 @@ export const AudioController: FC<AudioControllerProps> = ({
       ? { status: 'ENDED' }
       : { status: 'WAITING_FOR_AUDIO_CONTEXT' },
   );
-  const [audioError, setAudioError] = useState(false);
 
   const audio1Ref = useRef<HTMLAudioElement>(null);
   const audio2Ref = useRef<HTMLAudioElement>(null);
@@ -71,35 +59,6 @@ export const AudioController: FC<AudioControllerProps> = ({
     stalledTimeout: null,
   });
 
-  const [audioStatus, dispatchAudioStatus] = useReducer(
-    (
-      state: AudioStatus,
-      action:
-        | 'RESET_AUDIO_STATUS'
-        | 'AUDIO_PAUSED'
-        | 'AUDIO_STALLED'
-        | 'AUDIO_WAITING',
-    ) => {
-      switch (action) {
-        case 'RESET_AUDIO_STATUS':
-          return initialAudioStatus;
-
-        case 'AUDIO_PAUSED':
-          return { ...state, paused: true };
-
-        case 'AUDIO_STALLED':
-          return { ...state, stalled: true };
-
-        case 'AUDIO_WAITING':
-          return { ...state, waiting: true };
-
-        default:
-          return state;
-      }
-    },
-    initialAudioStatus,
-  );
-
   const setupAudioContext = useCallback(() => {
     const state = stateRef.current;
 
@@ -116,8 +75,6 @@ export const AudioController: FC<AudioControllerProps> = ({
     analyserNode.fftSize = 1024;
     analyserNode.minDecibels = -85;
     analyserNode.smoothingTimeConstant = 0.75;
-
-    const audioVisualizerData = new Uint8Array(analyserNode.frequencyBinCount);
 
     const gainNode = audioContext.createGain();
     state.setVolume = (volume) => {
@@ -257,8 +214,6 @@ export const AudioController: FC<AudioControllerProps> = ({
 
   const checkTargetShowInfo = useCallback(
     ({ ignoreAudioContext = false } = {}) => {
-      if (audioError) return;
-
       const state = stateRef.current;
 
       const ended = targetShowInfo.status === 'ENDED';
@@ -301,13 +256,7 @@ export const AudioController: FC<AudioControllerProps> = ({
         }
       }
     },
-    [
-      audioError,
-      queueStatusChange,
-      showInfo.status,
-      targetShowInfo,
-      updateTime,
-    ],
+    [queueStatusChange, showInfo.status, targetShowInfo, updateTime],
   );
 
   const initializeAudio = useCallback(async () => {
@@ -351,103 +300,6 @@ export const AudioController: FC<AudioControllerProps> = ({
     targetShowInfo.status,
   ]);
 
-  const onStalled = useCallback((e?: SyntheticEvent<HTMLAudioElement>) => {
-    const state = stateRef.current;
-
-    if (e?.target !== state.activeAudio) return;
-
-    // Safari: stalled events fire for seemingly no reason
-    if (navigator.userAgent.includes('Safari')) return;
-
-    dispatchAudioStatus('AUDIO_STALLED');
-  }, []);
-
-  const audioEvents: AudioHTMLAttributes<HTMLAudioElement> = useMemo(
-    () => ({
-      onEnded: (e) => {
-        const state = stateRef.current;
-
-        if (e.target !== state.activeAudio) return;
-
-        state.activeAudio.removeAttribute('src');
-
-        // prettier-ignore
-        // swap activeAudio and inactiveAudio
-        [state.activeAudio, state.inactiveAudio] =
-          [state.inactiveAudio, state.activeAudio];
-
-        setShowInfo({
-          status: 'WAITING_UNTIL_START',
-        });
-
-        doNextStatusChange();
-
-        dispatchAudioStatus('RESET_AUDIO_STATUS');
-
-        if (state.stalledTimeout) clearTimeout(state.stalledTimeout);
-      },
-      onError: () => {
-        setAudioError(true);
-      },
-      onPause: (e) => {
-        const state = stateRef.current;
-
-        if (e.target !== state.activeAudio) return;
-
-        dispatchAudioStatus('AUDIO_PAUSED');
-      },
-      onPlaying: (e) => {
-        const state = stateRef.current;
-
-        if (e.target !== state.activeAudio) return;
-
-        dispatchAudioStatus('RESET_AUDIO_STATUS');
-
-        if (state.stalledTimeout) clearTimeout(state.stalledTimeout);
-      },
-      onStalled,
-      onTimeUpdate: (e) => {
-        const state = stateRef.current;
-
-        if (e.target !== state.activeAudio) return;
-
-        if (showInfo.status === 'PLAYING') {
-          const currentTime = state.activeAudio.currentTime;
-
-          setShowInfo({
-            ...showInfo,
-            currentTime,
-          });
-
-          const nextSrcAlreadySet =
-            state.inactiveAudio?.attributes.getNamedItem('src')?.value ===
-            showInfo.nextSet?.audioUrl;
-          const lessThanOneMinuteLeft =
-            showInfo.currentSet &&
-            showInfo.currentSet.duration - showInfo.currentTime <= 60;
-          const shouldPreloadNextSet =
-            !nextSrcAlreadySet && showInfo.nextSet && lessThanOneMinuteLeft;
-          if (shouldPreloadNextSet && state.inactiveAudio && showInfo.nextSet) {
-            state.inactiveAudio.src = showInfo.nextSet.audioUrl;
-          }
-        }
-      },
-      onWaiting: (e) => {
-        const state = stateRef.current;
-
-        if (e.target !== state.activeAudio) return;
-
-        dispatchAudioStatus('AUDIO_WAITING');
-
-        if (state.stalledTimeout) clearTimeout(state.stalledTimeout);
-        state.stalledTimeout = setTimeout(() => {
-          onStalled();
-        }, 10 * 1000);
-      },
-    }),
-    [doNextStatusChange, onStalled, showInfo],
-  );
-
   // This will only run once.
   useEffect(() => {
     const state = stateRef.current;
@@ -467,13 +319,11 @@ export const AudioController: FC<AudioControllerProps> = ({
     <>
       {children({
         showInfo,
-        audioStatus,
-        audioError,
 
         initializeAudio,
       })}
-      <audio ref={audio1Ref} crossOrigin="anonymous" {...audioEvents} />
-      <audio ref={audio2Ref} crossOrigin="anonymous" {...audioEvents} />
+      <audio ref={audio1Ref} crossOrigin="anonymous" />
+      <audio ref={audio2Ref} crossOrigin="anonymous" />
     </>
   );
 };
