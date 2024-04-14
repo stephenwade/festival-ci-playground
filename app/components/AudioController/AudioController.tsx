@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/media-has-caption */
-
 import { differenceInSeconds } from 'date-fns';
 import type { AudioHTMLAttributes, FC, ReactNode, SyntheticEvent } from 'react';
 import {

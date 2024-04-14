@@ -88,12 +88,7 @@ function AudioControllerDisplay() {
       {({ showInfo, initializeAudio, getAudioVisualizerData }) => (
         <div>
           <p>
-            <button
-              data-testid="init-button"
-              onClick={() => {
-                void initializeAudio();
-              }}
-            >
+            <button data-testid="init-button" onClick={initializeAudio}>
               Initialize audio
             </button>
           </p>
