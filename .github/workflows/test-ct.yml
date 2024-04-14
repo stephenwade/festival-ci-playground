@@ -22,8 +22,10 @@ jobs:
           - macos-14
     runs-on: ${{ matrix.os }}
     steps:
-      - if: matrix.os == 'macos-12' || matrix.os == 'macos-13' || matrix.os == 'macos-14'
-        run: brew install blackhole-2ch switchaudio-osx; SwitchAudioSource -s 'BlackHole 2ch'
+      - if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
+        run: curl https://existential.audio/downloads/BlackHole2ch.v0.6.0.pkg -o blackhole-2ch.pkg; sudo installer -pkg blackhole-2ch.pkg -target /
+      - if: matrix.os == 'macos-13' || matrix.os == 'macos-14'
+        run: brew install switchaudio-osx; SwitchAudioSource -s 'BlackHole 2ch'
 
       - name: Check out repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
