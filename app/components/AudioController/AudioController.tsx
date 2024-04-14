@@ -143,6 +143,8 @@ export const AudioController: FC<AudioControllerProps> = ({
 
   const checkTargetShowInfo = useCallback(
     ({ ignoreAudioContext = false } = {}) => {
+      if (1) return;
+
       const state = stateRef.current;
 
       const ended = targetShowInfo.status === 'ENDED';
