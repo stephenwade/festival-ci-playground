@@ -22,21 +22,21 @@ export const AudioController: FC<AudioControllerProps> = ({
   const setupAudioContext = useCallback(() => {
     const audioContext = new AudioContext();
 
-    const track = audioContext.createMediaElementSource(audioRef.current!);
+    // const track = audioContext.createMediaElementSource(audioRef.current!);
 
-    const analyserNode = audioContext.createAnalyser();
-    analyserNode.fftSize = 1024;
-    analyserNode.minDecibels = -85;
-    analyserNode.smoothingTimeConstant = 0.75;
+    // const analyserNode = audioContext.createAnalyser();
+    // analyserNode.fftSize = 1024;
+    // analyserNode.minDecibels = -85;
+    // analyserNode.smoothingTimeConstant = 0.75;
 
-    const gainNode = audioContext.createGain();
+    // const gainNode = audioContext.createGain();
 
-    if (track) {
-      track
-        .connect(analyserNode)
-        .connect(gainNode)
-        .connect(audioContext.destination);
-    }
+    // if (track) {
+    //   track
+    //     .connect(analyserNode)
+    //     .connect(gainNode)
+    //     .connect(audioContext.destination);
+    // }
 
     return audioContext;
   }, []);
