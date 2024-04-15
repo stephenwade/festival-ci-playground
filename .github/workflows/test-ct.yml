@@ -20,13 +20,17 @@ jobs:
           - macos-12
           - macos-13
           - macos-14
+        scream:
+          - '3.8'
+          - '3.9'
     runs-on: ${{ matrix.os }}
     steps:
+      # https://github.com/actions/runner-images/issues/2528#issuecomment-934857719
       - name: Install Scream (Windows virtual audio driver)
         if: startsWith(matrix.os, 'windows')
         run: |
-          Invoke-WebRequest https://github.com/duncanthrax/scream/releases/download/4.0/Scream4.0.zip -OutFile Scream.zip
-          Expand-Archive -Path Scream.zip -DestinationPath Scream
+          Invoke-WebRequest https://github.com/duncanthrax/scream/releases/download/${{ matrix.scream }}/Scream${{ matrix.scream }}.zip -OutFile Scream${{ matrix.scream }}.zip
+          Expand-Archive -Path Scream${{ matrix.scream }}.zip -DestinationPath Scream
           Import-Certificate -FilePath Scream\Install\driver\x64\Scream.cat -CertStoreLocation Cert:\LocalMachine\TrustedPublisher
           Scream\Install\helpers\devcon-x64.exe install Scream\Install\driver\x64\Scream.inf *Scream
 
