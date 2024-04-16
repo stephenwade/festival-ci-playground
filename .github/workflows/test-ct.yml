@@ -24,10 +24,7 @@ jobs:
     steps:
       - name: Create virtual audio device on Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y alsa-utils
-          sudo modprobe snd-aloop
+        run: jackd -d dummy &
 
       - name: Install BlackHole (virtual audio driver) on macOS
         if: startsWith(matrix.os, 'macos')
