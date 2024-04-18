@@ -18,14 +18,12 @@ jobs:
           - macos-14
     runs-on: ${{ matrix.os }}
     steps:
-      # https://github.com/mozilla/cubeb/blob/master/.github/workflows/build.yml
       - name: Install dependencies (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
-          sudo apt-get install libpulse-dev pulseaudio
-          # pulseaudio -D --start
+          sudo apt-get install pulseaudio
           systemctl --user start pulseaudio.socket
-        if: startsWith(matrix.os, 'ubuntu')
 
       - name: Allow microphone access to all apps (macOS 14)
         if: ${{ matrix.os == 'macos-14' }}
