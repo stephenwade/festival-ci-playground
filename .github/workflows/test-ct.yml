@@ -25,7 +25,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install libpulse-dev pulseaudio
-          pulseaudio -D --start
+          # pulseaudio -D --start
+          systemctl --user start pulseaudio.socket
         if: startsWith(matrix.os, 'ubuntu')
 
       - uses: LABSN/sound-ci-helpers@v1
