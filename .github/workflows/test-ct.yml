@@ -40,6 +40,10 @@ jobs:
           New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy\"
           New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessMicrophone" -Value "0x00000001" -PropertyType "dword"
 
+      - name: Start Audio Service (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: Start-Service AudioSrv
+
       - name: Install virtual audio devices (macOS)
         if: startsWith(matrix.os, 'macos')
         run: |
