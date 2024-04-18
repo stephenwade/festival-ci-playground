@@ -14,8 +14,6 @@ jobs:
         os:
           - ubuntu-20.04
           - ubuntu-22.04
-          - windows-2019
-          - windows-2022
           - macos-13
           - macos-14
     runs-on: ${{ matrix.os }}
@@ -28,9 +26,6 @@ jobs:
           # pulseaudio -D --start
           systemctl --user start pulseaudio.socket
         if: startsWith(matrix.os, 'ubuntu')
-
-      - uses: LABSN/sound-ci-helpers@v1
-        if: startsWith(matrix.os, 'windows')
 
       - name: Allow microphone access to all apps (macOS 14)
         if: ${{ matrix.os == 'macos-14' }}
