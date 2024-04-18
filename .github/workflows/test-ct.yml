@@ -23,19 +23,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install dependencies (Linux)
-        run: sudo apt-get update && sudo apt-get install libpulse-dev pulseaudio
-        if: startsWith(matrix.os, 'ubuntu')
-
-      - name: Start sound server (Linux)
-        if: startsWith(matrix.os, 'ubuntu')
-        run: pulseaudio -D --start
-
-      - name: Configure pulseaudio (Linux)
-        if: startsWith(matrix.os, 'ubuntu')
         run: |
-          sudo apt install -y pipewire pipewire-pulse pipewire-media-session
-          sudo touch /usr/share/pipewire/media-session.d/with-pulseaudio
-          systemctl --user restart pipewire-session-manager
+          sudo apt-get update
+          sudo apt-get install libpulse-dev pulseaudio
+          pulseaudio -D --start
+        if: startsWith(matrix.os, 'ubuntu')
 
       - name: Install virtual audio devices (Windows)
         if: startsWith(matrix.os, 'windows')
@@ -46,13 +38,12 @@ jobs:
         shell: pwsh
         run: |
           New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy\"
-          New-ItemProperty -Path "HKLM:\SOFTWARE\policies\microsoft\windows\appprivacy" -Name "LetAppsAccessMicrophone" -Value "0x00000001" -PropertyType "dword"
+          New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessMicrophone" -Value "0x00000001" -PropertyType "dword"
 
       - name: Install virtual audio devices (macOS)
         if: startsWith(matrix.os, 'macos')
         run: |
-          brew install switchaudio-osx
-          brew install blackhole-2ch
+          brew install blackhole-2ch switchaudio-osx
           SwitchAudioSource -s "BlackHole 2ch" -t input
           SwitchAudioSource -s "BlackHole 2ch" -t output
 
