@@ -22,6 +22,38 @@ jobs:
           - macos-14
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install dependencies (Linux)
+        run: sudo apt-get update && sudo apt-get install libpulse-dev pulseaudio
+        if: startsWith(matrix.os, 'ubuntu')
+
+      - name: Start sound server (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: pulseaudio -D --start
+
+      - name: Install virtual audio devices (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: git clone https://github.com/LABSN/sound-ci-helpers && powershell sound-ci-helpers/windows/setup_sound.ps1
+
+      - name: Allow microphone access to all apps (Windows)
+        if: startsWith(matrix.os, 'windows')
+        shell: pwsh
+        run: |
+          New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy\"
+          New-ItemProperty -Path "HKLM:\SOFTWARE\policies\microsoft\windows\appprivacy" -Name "LetAppsAccessMicrophone" -Value "0x00000001" -PropertyType "dword"
+
+      - name: Install virtual audio devices (macOS)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          brew install switchaudio-osx
+          brew install blackhole-2ch
+          SwitchAudioSource -s "BlackHole 2ch" -t input
+          SwitchAudioSource -s "BlackHole 2ch" -t output
+
+      - name: Allow microphone access to all apps (macOS 14)
+        if: ${{ matrix.os == 'macos-14' }}
+        run: |
+          sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
+
       - name: Check out repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
