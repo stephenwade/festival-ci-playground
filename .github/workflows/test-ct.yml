@@ -28,6 +28,10 @@ jobs:
           pulseaudio -D --start
         if: startsWith(matrix.os, 'ubuntu')
 
+      - name: Install Ubuntu Desktop
+        if: matrix.os == 'ubuntu-22.04'
+        run: sudo apt-get install ubuntu-desktop
+
       - uses: LABSN/sound-ci-helpers@v1
         if: startsWith(matrix.os, 'windows')
 
