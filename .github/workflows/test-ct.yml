@@ -29,20 +29,8 @@ jobs:
           pulseaudio -D --start
         if: startsWith(matrix.os, 'ubuntu')
 
-      - name: Install virtual audio devices (Windows)
+      - uses: LABSN/sound-ci-helpers@v1
         if: startsWith(matrix.os, 'windows')
-        run: git clone https://github.com/LABSN/sound-ci-helpers && powershell sound-ci-helpers/windows/setup_sound.ps1
-
-      - name: Allow microphone access to all apps (Windows)
-        if: startsWith(matrix.os, 'windows')
-        shell: pwsh
-        run: |
-          New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy\"
-          New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" -Name "LetAppsAccessMicrophone" -Value "0x00000001" -PropertyType "dword"
-
-      - name: Start Audio Service (Windows)
-        if: startsWith(matrix.os, 'windows')
-        run: Start-Service AudioSrv
 
       - name: Allow microphone access to all apps (macOS 14)
         if: ${{ matrix.os == 'macos-14' }}
