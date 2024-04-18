@@ -14,14 +14,22 @@ jobs:
         os:
           - ubuntu-20.04
           - ubuntu-22.04
-          - windows-2019
-          - windows-2022
-          - macos-11
-          - macos-12
           - macos-13
           - macos-14
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install dependencies (Linux)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install pulseaudio
+          systemctl --user start pulseaudio.socket
+
+      - name: Allow microphone access to all apps (macOS 14)
+        if: ${{ matrix.os == 'macos-14' }}
+        run: |
+          sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
+
       - name: Check out repository
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
