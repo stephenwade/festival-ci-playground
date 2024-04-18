@@ -10,7 +10,7 @@
   "type": "module",
   "scripts": {
     "format": "prettier . --write --ignore-path .gitignore --log-level warn",
-    "test-ct": "playwright test -c playwright-ct.config.js"
+    "test-ct": "playwright test -c playwright-ct.config.js --headed"
   },
   "dependencies": {
     "react": "18.2.0",
