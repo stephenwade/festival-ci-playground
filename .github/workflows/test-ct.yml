@@ -16,21 +16,12 @@ jobs:
           - ubuntu-22.04
           - windows-2019
           - windows-2022
-          - macos-11
-          - macos-12
           - macos-13
           - macos-14
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Install dependencies (Linux)
-        run: |
-          sudo apt-get update
-          sudo apt-get install libpulse-dev pulseaudio
-          pulseaudio -D --start
-        if: startsWith(matrix.os, 'ubuntu')
-
       - uses: LABSN/sound-ci-helpers@v1
-        if: startsWith(matrix.os, 'windows')
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'windows')
 
       - name: Allow microphone access to all apps (macOS 14)
         if: ${{ matrix.os == 'macos-14' }}
