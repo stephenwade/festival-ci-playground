@@ -30,12 +30,11 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: pulseaudio -D --start
 
-      - name: Configure sound server (Linux)
+      - name: Configure pulseaudio (Linux)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          pactl load-module module-null-sink sink_name=virtual-audio
-          pactl load-module module-loopback source=virtual-audio.monitor sink=alsa_output.pci-0000_00_1f.3.analog-stereo
-          pactl load-module module-loopback source=alsa_input.pci-0000_00_1f.3.analog-stereo sink=virtual-audio
+          sudo touch /usr/share/pipewire/media-session.d/with-pulseaudio
+          systemctl --user restart pipewire-session-manager
 
       - name: Install virtual audio devices (Windows)
         if: startsWith(matrix.os, 'windows')
