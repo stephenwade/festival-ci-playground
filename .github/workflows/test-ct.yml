@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Install dependencies (Linux)
-        run: sudo apt-get update && sudo apt-get install libpulse-dev pulseaudio
+        run: sudo apt-get update && sudo apt-get install libpulse-dev pulseaudio libpulse0
         if: startsWith(matrix.os, 'ubuntu')
 
       - name: Start sound server (Linux)
