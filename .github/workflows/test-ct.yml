@@ -44,13 +44,6 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         run: Start-Service AudioSrv
 
-      - name: Install virtual audio devices (macOS)
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          brew install blackhole-2ch switchaudio-osx
-          SwitchAudioSource -s "BlackHole 2ch" -t input
-          SwitchAudioSource -s "BlackHole 2ch" -t output
-
       - name: Allow microphone access to all apps (macOS 14)
         if: ${{ matrix.os == 'macos-14' }}
         run: |
