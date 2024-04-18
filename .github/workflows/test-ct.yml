@@ -33,6 +33,7 @@ jobs:
       - name: Configure pulseaudio (Linux)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          sudo apt install -y pipewire pipewire-pulse pipewire-media-session
           sudo touch /usr/share/pipewire/media-session.d/with-pulseaudio
           systemctl --user restart pipewire-session-manager
 
